@@ -1,0 +1,18 @@
+DROP TABLE IF EXISTS audit_logs CASCADE;
+DROP TABLE IF EXISTS approval_delegations CASCADE;
+DROP TABLE IF EXISTS approval_votes CASCADE;
+DROP TABLE IF EXISTS approval_requests CASCADE;
+DROP TABLE IF EXISTS items CASCADE;
+DROP TABLE IF EXISTS workflow_transitions CASCADE;
+DROP TABLE IF EXISTS workflow_states CASCADE;
+DROP TABLE IF EXISTS workflows CASCADE;
+DROP TABLE IF EXISTS tenant_memberships CASCADE;
+DROP TABLE IF EXISTS tenants CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+DROP TYPE IF EXISTS audit_action;
+DROP TYPE IF EXISTS vote_decision;
+DROP TYPE IF EXISTS approval_status;
+DROP TYPE IF EXISTS approval_strategy;
+DROP TYPE IF EXISTS tenant_role;
+DROP FUNCTION IF EXISTS prevent_audit_modification();
+DROP FUNCTION IF EXISTS update_updated_at();
