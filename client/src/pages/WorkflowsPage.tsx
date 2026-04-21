@@ -215,10 +215,6 @@ function CreateWorkflowModal({
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <h2>Create Workflow</h2>
-        <div className="alert alert-info" style={{ marginBottom: "16px" }}>
-          This will create a standard <strong>Document Review</strong> template
-          with Draft → In ReView Approved/Rejected states.
-        </div>
         {error && <div className="alert alert-error">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="form-group">

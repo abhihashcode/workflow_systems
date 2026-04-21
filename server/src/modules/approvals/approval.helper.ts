@@ -2,13 +2,15 @@ import { performTransition } from "../items/items.service";
 import { WorkflowTransition, Item } from "../../types";
 import { createAuditLog } from "../audit/audit.service";
 
-// Resolve whether a request reaches approval threshold
+// Resolve whether a request reaches approval threshold.
+// Called after every vote is cast.
 export async function checkAndResolveApproval(
   approvalRequestId: string,
   tenantId: string,
   transition: WorkflowTransition,
   item: Item,
   client: import("pg").PoolClient,
+  actorId: string,   // the actor who just voted (used for audit trail on transition)
 ): Promise<void> {
   const votes = await client.query<{ decision: string; count: string }>(
     `SELECT decision, COUNT(*) as count
@@ -32,6 +34,7 @@ export async function checkAndResolveApproval(
   const strategy = transition.approval_strategy;
 
   if (strategy === "single") {
+    // First vote wins
     if (approveCount >= 1) finalDecision = "approved";
     else if (rejectCount >= 1) finalDecision = "rejected";
   } else if (strategy === "quorum") {
@@ -39,7 +42,8 @@ export async function checkAndResolveApproval(
     if (approveCount >= quorum) finalDecision = "approved";
     else if (rejectCount >= quorum) finalDecision = "rejected";
   } else if (strategy === "all") {
-    // Get total eligible approvers (members with approver or admin role)
+    // All eligible approvers (admin + approver role) must vote approve.
+    // Any rejection immediately resolves as rejected.
     const eligibleResult = await client.query<{ count: string }>(
       `SELECT COUNT(*) as count FROM tenant_memberships
        WHERE tenant_id = $1 AND role IN ('admin', 'approver')`,
@@ -61,6 +65,7 @@ export async function checkAndResolveApproval(
     await createAuditLog(
       {
         tenantId,
+        actorId,
         action: "approval_request.resolved",
         entityType: "approval_request",
         entityId: approvalRequestId,
@@ -70,12 +75,12 @@ export async function checkAndResolveApproval(
     );
 
     if (finalDecision === "approved") {
-      // Perform the actual item transition
+      // Perform the actual state transition on the item
       await performTransition(
         client,
         item,
         transition,
-        item.created_by,
+        actorId,   // correctly use the approver as actor, not item.created_by
         tenantId,
       );
     }

@@ -77,7 +77,8 @@ workflow-system/
 │       │   ├── tenants/     # Tenant CRUD + membership management
 │       │   ├── workflows/   # Workflow definitions (states + transitions)
 │       │   ├── items/       # Item lifecycle + transition execution
-│       │   ├── approvals/   # Approval requests, voting, delegation
+│       │   ├── approvals/   # Approval requests and voting
+│       │   ├── delegations/ # Approval authority delegation
 │       │   └── audit/       # Immutable audit log
 │       ├── types/           # Shared TypeScript interfaces
 │       └── utils/           # Errors, pagination, logger
@@ -182,11 +183,13 @@ Three strategies are supported:
 
 Resolution is checked automatically after each vote within the same transaction. If approved, `performTransition()` is called atomically — the item state change and approval resolution happen in one commit.
 
-### 4. Approval Delegation
+### 4. Approval Voting and Delegation
 
-When a user casts a vote, the system checks for an **active delegation** where they are the delegate. If found, the vote is recorded with `delegated_from_id` set to the original approver's ID. This prevents double-voting: if either the delegator or delegate has voted, the other cannot.
+Votes are stored in a separate `approval_votes` table rather than resolving the approval request directly. After each vote, `checkAndResolveApproval()` counts the current votes and applies the configured strategy to determine if the threshold has been met.
 
-Delegations have optional `valid_until` timestamps and can be revoked by the delegator or an admin.
+When a user casts a vote, the system checks for an **active delegation** where they are the delegate. If found, the vote is recorded with `delegated_from_id` set to the original approver's ID, preserving the full delegation chain in the audit trail. The `UNIQUE (approval_request_id, voter_id)` constraint on `approval_votes` prevents any voter from casting more than one vote per request.
+
+Delegations have optional `valid_until` timestamps and can be revoked by the delegator or an admin at any time.
 
 ### 5. Audit Immutability
 
@@ -273,11 +276,15 @@ POST /api/tenants/:tenantId/items/:id/transitions { transition_id, version, idem
 ```
 GET  /api/tenants/:tenantId/approvals             ?page&item_id&status
 GET  /api/tenants/:tenantId/approvals/:id
-POST /api/tenants/:tenantId/approvals/:id/votes   { decision: approved|rejected, comment? }
+POST /api/tenants/:tenantId/approvals/:id/resolve { decision: approved|rejected, comment? }
+POST /api/tenants/:tenantId/approvals/:id/cancel
+```
 
-GET  /api/tenants/:tenantId/approvals/delegations/me
-POST /api/tenants/:tenantId/approvals/delegations { delegate_email, valid_until?, reason? }
-DEL  /api/tenants/:tenantId/approvals/delegations/:id
+### Delegations
+```
+GET    /api/tenants/:tenantId/delegations         ?page
+POST   /api/tenants/:tenantId/delegations         { delegate_email, valid_until?, reason? }
+DELETE /api/tenants/:tenantId/delegations/:id
 ```
 
 ### Audit
@@ -315,13 +322,13 @@ The seed creates:
 5. Login as **user2** (approver) → navigate to Approvals → approve or reject
 6. Watch the item state update automatically upon approval
 7. Check Audit Log to see the full immutable trail
-8. Try delegation: user2 delegates to user3, then user3 can vote
+8. Try delegation: user2 navigates to Delegations → creates a delegation to user3 → user3 can then vote on approval requests on user2's behalf
 
 ---
 
 ## Running in Production
 
-1. Set `NODE_ENV=production` 
+1. Set `NODE_ENV=production`
 2. Set a strong `JWT_SECRET`
 3. Configure `DATABASE_URL` with SSL
 4. Build: `npm run build` then `node dist/index.js`

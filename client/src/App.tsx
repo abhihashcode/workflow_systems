@@ -13,7 +13,8 @@ import { WorkflowsPage } from './pages/WorkflowsPage';
 import { WorkflowDetailPage } from './pages/WorkflowDetailPage';
 import { AuditPage } from './pages/AuditPage';
 import { MembersPage } from './pages/MembersPage';
-import {CreateTenantPage} from './pages/CreateTenatePage';
+import { CreateTenantPage } from './pages/CreateTenatePage';
+import { DelegationsPage } from './pages/DelegationsPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -29,11 +30,14 @@ export function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-          <Route path="/" element={
-            <ProtectedRoute>
-              <AppShell />
-            </ProtectedRoute>
-          }>
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <AppShell />
+              </ProtectedRoute>
+            }
+          >
             <Route index element={<DashboardPage />} />
             <Route path="tenants/new" element={<CreateTenantPage />} />
             <Route path="items" element={<ItemsPage />} />
@@ -42,6 +46,7 @@ export function App() {
             <Route path="approvals/:requestId" element={<ApprovalDetailPage />} />
             <Route path="workflows" element={<WorkflowsPage />} />
             <Route path="workflows/:workflowId" element={<WorkflowDetailPage />} />
+            <Route path="delegations" element={<DelegationsPage />} />
             <Route path="audit" element={<AuditPage />} />
             <Route path="members" element={<MembersPage />} />
           </Route>

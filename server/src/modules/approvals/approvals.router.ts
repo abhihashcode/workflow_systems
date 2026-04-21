@@ -3,6 +3,7 @@ import { authenticate, requireTenantAccess } from "../../middleware/auth";
 import {
   resolveApprovalSchema,
   resolveApproval,
+  cancelApprovalRequest,
   getApprovalRequests,
   getApprovalRequest,
 } from "./approvals.service";
@@ -10,6 +11,7 @@ import { paginationSchema } from "../../utils/pagination";
 
 const router = Router({ mergeParams: true });
 
+// List approval requests (with optional filters)
 router.get(
   "/",
   authenticate,
@@ -29,6 +31,7 @@ router.get(
   },
 );
 
+// Get single approval request with votes
 router.get(
   "/:requestId",
   authenticate,
@@ -42,6 +45,7 @@ router.get(
   },
 );
 
+// Cast a vote (approve or reject)
 router.post(
   "/:requestId/resolve",
   authenticate,
@@ -54,6 +58,21 @@ router.post(
       req.userId!,
       decision,
       comment,
+    );
+    res.json(result);
+  },
+);
+
+// Cancel a pending approval request
+router.post(
+  "/:requestId/cancel",
+  authenticate,
+  requireTenantAccess(["admin", "member", "approver"]),
+  async (req: Request, res: Response) => {
+    const result = await cancelApprovalRequest(
+      req.tenantId!,
+      req.params["requestId"]!,
+      req.userId!,
     );
     res.json(result);
   },

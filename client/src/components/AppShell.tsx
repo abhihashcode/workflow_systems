@@ -23,28 +23,27 @@ export function AppShell() {
         </div>
         {currentTenant && (
           <nav className="sidebar-nav">
-            <NavLink
-              to="/items"
-              className={({ isActive }) => (isActive ? "active" : "")}
-            >
+            <NavLink to="/" end className={({ isActive }) => (isActive ? "active" : "")}>
+              Dashboard
+            </NavLink>
+            <NavLink to="/items" className={({ isActive }) => (isActive ? "active" : "")}>
               Items
             </NavLink>
-            <NavLink
-              to="/approvals"
-              className={({ isActive }) => (isActive ? "active" : "")}
-            >
+            <NavLink to="/approvals" className={({ isActive }) => (isActive ? "active" : "")}>
               Approvals
             </NavLink>
-            <NavLink
-              to="/workflows"
-              className={({ isActive }) => (isActive ? "active" : "")}
-            >
+            <NavLink to="/workflows" className={({ isActive }) => (isActive ? "active" : "")}>
               Workflows
             </NavLink>
-            <NavLink
-              to="/audit"
-              className={({ isActive }) => (isActive ? "active" : "")}
-            >
+            {["admin", "approver"].includes(currentTenant.role ?? "") && (
+              <NavLink
+                to="/delegations"
+                className={({ isActive }) => (isActive ? "active" : "")}
+              >
+                Delegations
+              </NavLink>
+            )}
+            <NavLink to="/audit" className={({ isActive }) => (isActive ? "active" : "")}>
               Audit Log
             </NavLink>
             {currentTenant.role === "admin" && (

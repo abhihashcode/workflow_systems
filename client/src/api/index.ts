@@ -59,7 +59,9 @@ function buildQuery(
   return q ? `?${q}` : "";
 }
 
+// ──────────────────────────────────────────
 // Auth
+// ──────────────────────────────────────────
 export const authApi = {
   register: (data: { email: string; password: string; full_name: string }) =>
     request<{
@@ -81,7 +83,9 @@ export const authApi = {
     request<{ id: string; email: string; full_name: string }>("/auth/me"),
 };
 
+// ──────────────────────────────────────────
 // Tenants
+// ──────────────────────────────────────────
 export const tenantsApi = {
   list: (params?: { page?: number; limit?: number }) =>
     request<{
@@ -123,10 +127,12 @@ export const tenantsApi = {
     }),
 };
 
+// ──────────────────────────────────────────
 // Workflows
+// ──────────────────────────────────────────
 export const workflowsApi = {
   list: (tenantId: string, params?: { page?: number }) =>
-    request<{ data: unknown[]; pagination: unknown }>(
+    request<{ data: unknown[]; pagination: { total: number; totalPages: number; page: number; limit: number } }>(
       `/tenants/${tenantId}/workflows${buildQuery(params)}`,
       { tenantId },
     ),
@@ -143,7 +149,9 @@ export const workflowsApi = {
     }),
 };
 
+// ──────────────────────────────────────────
 // Items
+// ──────────────────────────────────────────
 export const itemsApi = {
   list: (
     tenantId: string,
@@ -185,20 +193,22 @@ export const itemsApi = {
     ),
 };
 
+// ──────────────────────────────────────────
 // Approvals
+// ──────────────────────────────────────────
 export const approvalsApi = {
   list: (
     tenantId: string,
     params?: { page?: number; item_id?: string; status?: string },
   ) => {
-    const q = buildQuery(params);
     return request<{ data: unknown[]; pagination: unknown }>(
-      `/tenants/${tenantId}/approvals${q ? `?${q}` : ""}`,
+      `/tenants/${tenantId}/approvals${buildQuery(params)}`,
       { tenantId },
     );
   },
+  // Returns the approval request directly (with votes array) — NOT wrapped in { request: ... }
   get: (tenantId: string, requestId: string) =>
-    request<{ request: unknown }>(
+    request<unknown>(
       `/tenants/${tenantId}/approvals/${requestId}`,
       { tenantId },
     ),
@@ -212,9 +222,41 @@ export const approvalsApi = {
       body: data,
       tenantId,
     }),
+  cancel: (tenantId: string, requestId: string) =>
+    request(`/tenants/${tenantId}/approvals/${requestId}/cancel`, {
+      method: "POST",
+      tenantId,
+    }),
 };
 
+// ──────────────────────────────────────────
+// Delegations
+// ──────────────────────────────────────────
+export const delegationsApi = {
+  list: (tenantId: string, params?: { page?: number }) =>
+    request<{ data: unknown[]; pagination: unknown }>(
+      `/tenants/${tenantId}/delegations${buildQuery(params)}`,
+      { tenantId },
+    ),
+  create: (
+    tenantId: string,
+    data: { delegate_email: string; valid_until?: string; reason?: string },
+  ) =>
+    request(`/tenants/${tenantId}/delegations`, {
+      method: "POST",
+      body: data,
+      tenantId,
+    }),
+  revoke: (tenantId: string, delegationId: string) =>
+    request(`/tenants/${tenantId}/delegations/${delegationId}`, {
+      method: "DELETE",
+      tenantId,
+    }),
+};
+
+// ──────────────────────────────────────────
 // Audit
+// ──────────────────────────────────────────
 export const auditApi = {
   list: (tenantId: string, params?: Record<string, string>) =>
     request<{ data: unknown[]; pagination: unknown }>(

@@ -10,6 +10,7 @@ import { workflowsRouter } from "./modules/workflows/workflows.router";
 import { itemsRouter } from "./modules/items/items.router";
 import { approvalsRouter } from "./modules/approvals/approvals.router";
 import { auditRouter } from "./modules/audit/audit.router";
+import { delegationsRouter } from "./modules/delegations/delegations.router";
 import type { Response } from "express";
 
 type PinoResponse = Response & { responseTime: number };
@@ -33,35 +34,22 @@ app.use(
       if (res.statusCode >= 400) return "warn";
       return "debug";
     },
-
-    // Compact, single-line
     customSuccessMessage(req, res) {
       return `${req.method} ${req.url} → ${res.statusCode}`;
     },
     customErrorMessage(req, res, err) {
       return `${req.method} ${req.url} → ${res.statusCode} — ${err.message}`;
     },
-
-    // Strip everything except what's actually useful
     serializers: {
       req(req) {
-        return {
-          method: req.method,
-          url: req.url,
-        };
+        return { method: req.method, url: req.url };
       },
       res(res) {
-        return {
-          status: res.statusCode,
-        };
+        return { status: res.statusCode };
       },
     },
-
-    // Include response time under a clean key
     customProps(_req, res) {
-      return {
-        responseTime: `${(res as PinoResponse).responseTime}ms`,
-      };
+      return { responseTime: `${(res as PinoResponse).responseTime}ms` };
     },
   }),
 );
@@ -77,6 +65,7 @@ app.use("/api/tenants", tenantsRouter);
 app.use("/api/tenants/:tenantId/workflows", workflowsRouter);
 app.use("/api/tenants/:tenantId/items", itemsRouter);
 app.use("/api/tenants/:tenantId/approvals", approvalsRouter);
+app.use("/api/tenants/:tenantId/delegations", delegationsRouter);  // NEW
 app.use("/api/tenants/:tenantId/audit", auditRouter);
 
 // Error handler

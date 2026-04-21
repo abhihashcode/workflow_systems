@@ -71,6 +71,17 @@ export interface Item {
   updated_at: string;
 }
 
+export interface ApprovalVote {
+  id: string;
+  voter_id: string;
+  voter_name: string;
+  voter_email: string;
+  delegated_from_name?: string | null;
+  decision: VoteDecision;
+  comment: string | null;
+  created_at: string;
+}
+
 export interface ApprovalRequest {
   id: string;
   item_id: string;
@@ -80,19 +91,26 @@ export interface ApprovalRequest {
   requested_by: string;
   requester_name?: string;
   status: ApprovalStatus;
-  created_at: string;
   approval_strategy?: ApprovalStrategy;
   quorum_count?: number | null;
+  resolved_at?: string | null;
+  created_at: string;
+  votes?: ApprovalVote[];
 }
 
-export interface ApprovalVote {
+export interface ApprovalDelegation {
   id: string;
-  voter_id: string;
-  voter_name: string;
-  voter_email: string;
-  delegated_from_name?: string;
-  decision: VoteDecision;
-  comment: string | null;
+  tenant_id: string;
+  delegator_id: string;
+  delegator_name?: string;
+  delegator_email?: string;
+  delegate_id: string;
+  delegate_name?: string;
+  delegate_email?: string;
+  valid_from: string;
+  valid_until: string | null;
+  is_active: boolean;
+  reason: string | null;
   created_at: string;
 }
 
